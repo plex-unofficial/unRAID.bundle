@@ -42,7 +42,12 @@ def ApplicationsMainMenu():
     if startState == 'STARTED':
         dir.Append(Function(PopupDirectoryItem(ConfirmSpinUp, 'Spin up', 'will immediately spin up all disks.')))
         dir.Append(Function(PopupDirectoryItem(ConfirmSpinDown, 'Spin down', 'will immediately spin down all disks.')))
-        dir.Append(Function(PopupDirectoryItem(ConfirmParityCheck, 'Check Parity', subtitle=LastParityCheck())))
+        if CheckInProgress():
+            dir.Append(Function(PopupDirectoryItem(CancelParityCheck, 'Parity check in progress', subtitle='Click to cancel',
+                summary=ParityCheckSummary())))
+        else:
+            dir.Append(Function(PopupDirectoryItem(ConfirmParityCheck, 'Check Parity', subtitle=LastParityCheck(),
+                summary = 'Depending on your system, this may take several hours and may reduce server performance during that time.')))
         dir.Append(Function(PopupDirectoryItem(ConfirmStop, 'Stop Array', 'will take the array off-line.')))
     else:
         dir.Append(Function(PopupDirectoryItem(ConfirmStart, 'Start Array', 'will bring the array on-line.')))
@@ -215,24 +220,85 @@ def SpinDownArray(sender):
 
 ####################################################################################################
 
+def CheckInProgress():
+    
+    url = Get_unRAID_URL() + '/main.htm'
+    mainPage = HTML.ElementFromURL(url, errors='ignore', cacheTime=0)
+    
+    check = mainPage.xpath('//form[@name="mainForm"]/table/tr[2]/td')[0].text
+    Log(check)
+    
+    if check == 'Parity-Check in progress.':
+        return True
+    else:
+        return False
+
+####################################################################################################
+
 def ConfirmParityCheck(sender):
-    return
+    dir = MediaContainer()
+    dir.Append(Function(DirectoryItem(CheckParity, 'Start Parity check?')))
+    return dir
 
 ####################################################################################################
 
 def CheckParity(sender):
-    return
+    
+    url = Get_unRAID_URL() + '/update.htm?startState=STARTED&cmdCheck=Check'
+    check = HTTP.Request(url).content
+    
+    return MessageContainer(NAME, L('Parity check has begun.'))
+
+####################################################################################################
+
+def CancelParityCheck(sender):
+    dir = MediaContainer()
+    dir.Append(Function(DirectoryItem(CancelCheck, 'Stop current parity check?')))
+    return dir
+
+####################################################################################################
+
+def CancelCheck(sender):
+    
+    url = Get_unRAID_URL() + '/update.htm?startState=STARTED&cmdNoCheck=Cancel'
+    cancel = HTTP.Request(url).content
+    
+    return MessageContainer(NAME, L('Parity check has been cancelled.'))
+
+####################################################################################################
+
+def ParityCheckSummary():
+    
+    url = Get_unRAID_URL() + '/main.htm'
+    mainPage = HTML.StringFromElement(HTML.ElementFromURL(url, errors='ignore', cacheTime=0))
+    mainPage = HTML.ElementFromString(mainPage.replace('<strong>','').replace('</strong>',''))
+    
+    totalSize = mainPage.xpath('//form[@name="mainForm"]/table/tr[3]/td')[1].text
+    currentPosition = mainPage.xpath('//form[@name="mainForm"]/table/tr[4]/td')[1].text
+    percentComplete = mainPage.xpath('//form[@name="mainForm"]/table/tr[4]/td')[2].text
+    estimatedSpeed = mainPage.xpath('//form[@name="mainForm"]/table/tr[5]/td')[1].text
+    estimatedFinish = mainPage.xpath('//form[@name="mainForm"]/table/tr[6]/td')[1].text
+    syncErrors = mainPage.xpath('//form[@name="mainForm"]/table/tr[7]/td')[1].text
+    
+    summary = ('Total Size: '+totalSize+'KB\nProgress: '+currentPosition+'KB '+percentComplete+'\n'+
+        'Estimated Speed: '+estimatedSpeed+'KB/sec\nEstimated Time to Finish: '+estimatedFinish+' minutes\n'+
+        'Sync Errors: '+syncErrors)
+    
+    return summary
 
 ####################################################################################################
 
 def LastParityCheck():
     
     url = Get_unRAID_URL() + '/main.htm'
-    mainPage = HTML.ElementFromURL(url, errors='ignore', cacheTime=0)
+    mainPage = HTML.StringFromElement(HTML.ElementFromURL(url, errors='ignore', cacheTime=0))
+    mainPage = HTML.ElementFromString(mainPage.replace('<strong>','').replace('</strong>','').replace('<br>',''))
     
-    lastCheck = mainPage.xpath('//form[@name="mainForm"]/table/tr[2]/td')[0].text
-    #lastCheck = mainPage.xpath('//form[@name="mainForm"]/table/tr[2]/td')[2].text
-    Log(lastCheck)
+    #lastCheck = mainPage.xpath('//form[@name="mainForm"]/table/tr[2]/td')[0].text
+    lastCheck = mainPage.xpath('//form[@name="mainForm"]/table/tr[2]/td')[2].text
+    lastDate = lastCheck.split('on ')[1].split(',')[0]
+    lastErrors = lastCheck.split('finding ')[1].split(' errors')[0]
+    lastCheck = 'Last: %s Errors: %s' % (lastDate, lastErrors)
     
     return lastCheck
 
