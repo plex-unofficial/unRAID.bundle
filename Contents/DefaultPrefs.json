@@ -1,0 +1,23 @@
+[
+    {
+        "id":       "unRAID_host",
+        "label":    "IP address of unRAID server",
+        "type":     "text",
+        "default":  "tower"
+    },
+    {
+        "id":       "unRAID_user",
+        "label":    "unRAID server username",
+        "type":     "text",
+        "default":  ""
+    },
+    {
+        "id":       "unRAID_pass",
+        "label":    "unRAID server password",
+        "type":     "text",
+        "option":   "hidden",
+        "default":  ""
+    }
+]
+
+
