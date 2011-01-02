@@ -1,4 +1,5 @@
 from time import sleep
+from WOL import WakeOnLan
 
 ####################################################################################################
 
@@ -64,6 +65,11 @@ def ApplicationsMainMenu():
         dir.Append(Function(PrefsItem(title='Server Unavailable', subtitle='Cannot connect to unRAID server',
             summary='The server is either offline or not available at the network address specified in the plugin '+
             'preferences. Please confirm that the prefs specify the correct IP address and that the server is online.')))
+        if Prefs['WOL']:
+            dir.Append(Function(PopupDirectoryItem(WOLMenu, 'Wake Server', 'Send WOL magic packet to server',
+                summary='Attempt to wake a sleeping server by sending a magic packet over the network. Requires the server\'s'+
+                'MAC Address set in the preferences.  Will only work if the server is sleeping and supports Wake-On-LAN.'),
+                Prefs['MACaddress']))
 
     dir.Append(PrefsItem(title='Preferences', subtitle='unRAID plugin', thumb=R(PREFS_ICON)))
     
@@ -354,3 +360,8 @@ def PowerDownArray(sender):
     return MessageContainer(NAME, L('The server has been shut down. This plugin will not function until the server has been started again.'))
 
 ####################################################################################################
+
+def WOLMenu(sender, MACaddress):
+    dir = MediaContainer()
+    dir.Append(Function(DirectoryItem(WakeOnLan, 'Send WOL packet to %s' % MACaddress), MACaddress))
+    return dir

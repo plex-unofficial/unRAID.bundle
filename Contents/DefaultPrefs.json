@@ -4,6 +4,18 @@
         "label":    "IP address of unRAID server",
         "type":     "text",
         "default":  "tower"
+    },
+    {
+        "id":       "WOL",
+        "label":    "Enable Server Wake-On-LAN",
+        "type":     "bool",
+        "default":  "false"
+    },
+    {
+        "id":       "MACaddress",
+        "label":    "unRAID Server MAC address",
+        "type":     "text",
+        "default":  ""
     }
 ]
 
