@@ -7,6 +7,7 @@ APPLICATIONS_PREFIX = "/applications/unraid"
 NAME    = L('unRAID')
 ART     = 'art-default.png'
 ICON    = 'icon-default.png'
+PREFS_ICON  = 'icon-prefs.png'
 DISK_ICON = 'icon-hdd.jpg'
 
 ####################################################################################################
@@ -34,28 +35,38 @@ def ApplicationsMainMenu():
 
     dir = MediaContainer(viewGroup="InfoList", noCache=True)
     
-    startState = GetStartState()
-    Log(startState)
+    try:
+        startState = GetStartState()
+        Log(startState)
+    except:
+        startState= 'OFFLINE'
     
-    dir.Append(Function(DirectoryItem(DiskStatus, 'Disk Status', 'View disk status details.',
-        summary=DiskStatusSummary())))
-    if startState == 'STARTED':
-        dir.Append(Function(PopupDirectoryItem(ConfirmSpinUp, 'Spin up', 'will immediately spin up all disks.')))
-        dir.Append(Function(PopupDirectoryItem(ConfirmSpinDown, 'Spin down', 'will immediately spin down all disks.')))
-        if CheckInProgress():
-            dir.Append(Function(PopupDirectoryItem(CancelParityCheck, 'Parity check in progress', subtitle='Click to cancel',
-                summary=ParityCheckSummary())))
+    if startState != 'OFFLINE':
+        dir.Append(Function(DirectoryItem(DiskStatus, 'Disk Status', 'View disk status details.',
+            summary=DiskStatusSummary())))
+        if startState == 'STARTED':
+            dir.Append(Function(PopupDirectoryItem(ConfirmSpinUp, 'Spin up', 'will immediately spin up all disks.')))
+            dir.Append(Function(PopupDirectoryItem(ConfirmSpinDown, 'Spin down', 'will immediately spin down all disks.')))
+            if CheckInProgress():
+                dir.Append(Function(PopupDirectoryItem(CancelParityCheck, 'Parity check in progress', subtitle='Click to cancel',
+                    summary=ParityCheckSummary())))
+            else:
+                dir.Append(Function(PopupDirectoryItem(ConfirmParityCheck, 'Check Parity', subtitle=LastParityCheck(),
+                    summary = 'Depending on your system, this may take several hours and may reduce server performance during that time.')))
+            dir.Append(Function(PopupDirectoryItem(ConfirmStop, 'Stop Array', 'will take the array off-line.')))
         else:
-            dir.Append(Function(PopupDirectoryItem(ConfirmParityCheck, 'Check Parity', subtitle=LastParityCheck(),
-                summary = 'Depending on your system, this may take several hours and may reduce server performance during that time.')))
-        dir.Append(Function(PopupDirectoryItem(ConfirmStop, 'Stop Array', 'will take the array off-line.')))
+            dir.Append(Function(PopupDirectoryItem(ConfirmStart, 'Start Array', 'will bring the array on-line.')))
+            dir.Append(Function(PopupDirectoryItem(ConfirmReboot, 'Restart', 'will activate a system reset.',
+                summary = 'Depending on your system, it may be a few minutes before the server (and the plugin) are back online')))
+            dir.Append(Function(PopupDirectoryItem(ConfirmPowerDown, 'Power Down', 'will activate a clean power down.',
+                summary = 'Once the server is powered down you will need to power it up manually. There is no "power up" command in this plugin.')))
     else:
-        dir.Append(Function(PopupDirectoryItem(ConfirmStart, 'Start Array', 'will bring the array on-line.')))
-        dir.Append(Function(PopupDirectoryItem(ConfirmReboot, 'Restart', 'will activate a system reset.',
-            summary = 'Depending on your system, it may be a few minutes before the server (and the plugin) are back online')))
-        dir.Append(Function(PopupDirectoryItem(ConfirmPowerDown, 'Power Down', 'will activate a clean power down.',
-            summary = 'Once the server is powered down you will need to power it up manually. There is no "power up" command in this plugin.')))
+        dir.Append(Function(PrefsItem(title='Server Unavailable', subtitle='Cannot connect to unRAID server',
+            summary='The server is either offline or not available at the network address specified in the plugin '+
+            'preferences. Please confirm that the prefs specify the correct IP address and that the server is online.')))
 
+    dir.Append(PrefsItem(title='Preferences', subtitle='unRAID plugin', thumb=R(PREFS_ICON)))
+    
     return dir
 
 ####################################################################################################
