@@ -24,6 +24,18 @@ def Start():
     MediaContainer.title1 = NAME
     DirectoryItem.thumb = R(ICON)
     PopupDirectoryItem.thumb = R(ICON)
+    
+    if Prefs['User'] and Prefs['Pass']:
+        HTTP.SetPassword(url=Get_unRAID_URL(), username=Prefs['User'], password=Prefs['Pass'])
+
+####################################################################################################
+
+def ValidatePrefs():
+
+    if Prefs['User'] and Prefs['Pass']:
+        HTTP.SetPassword(url=Get_unRAID_URL(), username=Prefs['User'], password=Prefs['Pass'])
+        
+    return
 
 ####################################################################################################
 
