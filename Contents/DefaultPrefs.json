@@ -6,6 +6,18 @@
         "default":  "tower"
     },
     {
+        "id":       "user",
+        "label":    "unRAID username",
+        "type":     "text",
+        "default":  ""
+    },
+    {
+        "id":       "pass",
+        "label":    "unRAID password",
+        "type":     "text",
+        "default":  ""
+    },
+    {
         "id":       "WOL",
         "label":    "Enable Server Wake-On-LAN",
         "type":     "bool",
