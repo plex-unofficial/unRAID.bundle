@@ -25,15 +25,15 @@ def Start():
     DirectoryItem.thumb = R(ICON)
     PopupDirectoryItem.thumb = R(ICON)
     
-    if Prefs['User'] and Prefs['Pass']:
+    if Prefs['user'] and Prefs['pass']:
         HTTP.SetPassword(url=Get_unRAID_URL(), username=Prefs['user'], password=Prefs['pass'])
 
 ####################################################################################################
 
 def ValidatePrefs():
 
-    if Prefs['User'] and Prefs['Pass']:
-        HTTP.SetPassword(url=Get_unRAID_URL(), username=Prefs['User'], password=Prefs['Pass'])
+    if Prefs['user'] and Prefs['pass']:
+        HTTP.SetPassword(url=Get_unRAID_URL(), username=Prefs['user'], password=Prefs['pass'])
         
     return
 
