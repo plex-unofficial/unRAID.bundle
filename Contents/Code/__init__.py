@@ -1,5 +1,6 @@
 from time import sleep
 from WOL import WakeOnLan
+from base64 import b64encode
 
 ####################################################################################################
 
@@ -25,15 +26,25 @@ def Start():
     DirectoryItem.thumb = R(ICON)
     PopupDirectoryItem.thumb = R(ICON)
     
+    #if Prefs['user'] and Prefs['pass']:
+    #    HTTP.SetPassword(url=Get_unRAID_URL(), username=Prefs['user'], password=Prefs['pass'])
+
+####################################################################################################
+
+def AuthHeader():
+    header = {}
+
     if Prefs['user'] and Prefs['pass']:
-        HTTP.SetPassword(url=Get_unRAID_URL(), username=Prefs['user'], password=Prefs['pass'])
+        header = {'Authorization': 'Basic ' + b64encode(Prefs['user'] + ':' + Prefs['pass'])}
+
+    return header
 
 ####################################################################################################
 
 def ValidatePrefs():
 
-    if Prefs['user'] and Prefs['pass']:
-        HTTP.SetPassword(url=Get_unRAID_URL(), username=Prefs['user'], password=Prefs['pass'])
+    #if Prefs['user'] and Prefs['pass']:
+    #    HTTP.SetPassword(url=Get_unRAID_URL(), username=Prefs['user'], password=Prefs['pass'])
         
     return
 
@@ -48,11 +59,9 @@ def ApplicationsMainMenu():
 
     dir = MediaContainer(viewGroup="InfoList", noCache=True)
     
-    try:
-        startState = GetStartState()
-        Log(startState)
-    except:
-        startState= 'OFFLINE'
+    startState = GetStartState()
+    Log(startState)
+    
     
     if startState != 'OFFLINE':
         dir.Append(Function(DirectoryItem(DiskStatus, 'Disk Status', 'View disk status details.',
@@ -94,7 +103,7 @@ def GetDiskStatus():
     disks = []
     
     url = Get_unRAID_URL() + '/main.htm'
-    mainPage = HTML.ElementFromURL(url, errors='ignore', cacheTime=0)
+    mainPage = HTML.ElementFromURL(url, errors='ignore', cacheTime=0, headers=AuthHeader())
     for status in mainPage.xpath('//table[@id="disk_table"]/tr'):
         try:
             diskName    = status.xpath('./td[1]/a')[0].text
@@ -174,9 +183,11 @@ def DiskMenu(sender):
 def GetStartState():
     
     url = Get_unRAID_URL() + '/main.htm'
-    mainPage = HTML.ElementFromURL(url, errors='ignore', cacheTime=0)
-    
-    state = mainPage.xpath('//input[@name="startState"]')[0].get('value')
+    mainPage = HTML.ElementFromURL(url, errors='ignore', cacheTime=0, headers=AuthHeader())
+    try:
+        state = mainPage.xpath('//input[@name="startState"]')[0].get('value')
+    except:
+        state= 'OFFLINE'
     
     return state
 
@@ -192,7 +203,7 @@ def ConfirmStart(sender):
 def StartArray(sender):
 
     url = Get_unRAID_URL() + '/update.htm?startState=STOPPED&cmdStart=Start'
-    start = HTTP.Request(url).content
+    start = HTTP.Request(url, headers=AuthHeader()).content
     
     ###allow time for array to spin up completely before trying to reload menu###
     sleep(10)
@@ -211,7 +222,7 @@ def ConfirmStop(sender):
 def StopArray(sender):
     
     url = Get_unRAID_URL() + '/update.htm?startState=STARTED&cmdStop=Stop'
-    stop = HTTP.Request(url).content
+    stop = HTTP.Request(url, headers=AuthHeader()).content
     
     return MessageContainer(NAME, L('Array is off-line.'))
 
@@ -227,7 +238,7 @@ def ConfirmSpinUp(sender):
 def SpinUpArray(sender):
     
     url = Get_unRAID_URL() + '/update.htm?startState=STARTED&cmdSpinUpAll=Spin+Up'
-    spinUp = HTTP.Request(url).content
+    spinUp = HTTP.Request(url, headers=AuthHeader()).content
     
     return MessageContainer(NAME, L('Disks in array are spun up.'))
 
@@ -243,7 +254,7 @@ def ConfirmSpinDown(sender):
 def SpinDownArray(sender):
     
     url = Get_unRAID_URL() + '/update.htm?startState=STARTED&cmdSpinDownAll=Spin+Down'
-    spinDown = HTTP.Request(url).content
+    spinDown = HTTP.Request(url, headers=AuthHeader()).content
     
     return MessageContainer(NAME, L('Disks in array are spun down.'))
 
@@ -252,7 +263,7 @@ def SpinDownArray(sender):
 def CheckInProgress():
     
     url = Get_unRAID_URL() + '/main.htm'
-    mainPage = HTML.ElementFromURL(url, errors='ignore', cacheTime=0)
+    mainPage = HTML.ElementFromURL(url, errors='ignore', cacheTime=0, headers=AuthHeader())
     
     check = mainPage.xpath('//form[@name="mainForm"]/table/tr[2]/td')[0].text
     Log(check)
@@ -274,7 +285,7 @@ def ConfirmParityCheck(sender):
 def CheckParity(sender):
     
     url = Get_unRAID_URL() + '/update.htm?startState=STARTED&cmdCheck=Check'
-    check = HTTP.Request(url).content
+    check = HTTP.Request(url, headers=AuthHeader()).content
     
     return MessageContainer(NAME, L('Parity check has begun.'))
 
@@ -290,7 +301,7 @@ def CancelParityCheck(sender):
 def CancelCheck(sender):
     
     url = Get_unRAID_URL() + '/update.htm?startState=STARTED&cmdNoCheck=Cancel'
-    cancel = HTTP.Request(url).content
+    cancel = HTTP.Request(url, headers=AuthHeader()).content
     
     return MessageContainer(NAME, L('Parity check has been cancelled.'))
 
@@ -299,7 +310,7 @@ def CancelCheck(sender):
 def ParityCheckSummary():
     
     url = Get_unRAID_URL() + '/main.htm'
-    mainPage = HTML.StringFromElement(HTML.ElementFromURL(url, errors='ignore', cacheTime=0))
+    mainPage = HTML.StringFromElement(HTML.ElementFromURL(url, errors='ignore', cacheTime=0, headers=AuthHeader()))
     mainPage = HTML.ElementFromString(mainPage.replace('<strong>','').replace('</strong>',''))
     
     totalSize = mainPage.xpath('//form[@name="mainForm"]/table/tr[3]/td')[1].text
@@ -320,7 +331,7 @@ def ParityCheckSummary():
 def LastParityCheck():
     
     url = Get_unRAID_URL() + '/main.htm'
-    mainPage = HTML.StringFromElement(HTML.ElementFromURL(url, errors='ignore', cacheTime=0))
+    mainPage = HTML.StringFromElement(HTML.ElementFromURL(url, errors='ignore', cacheTime=0, headers=AuthHeader()))
     mainPage = HTML.ElementFromString(mainPage.replace('<strong>','').replace('</strong>','').replace('<br>',''))
     
     #lastCheck = mainPage.xpath('//form[@name="mainForm"]/table/tr[2]/td')[0].text
@@ -343,7 +354,7 @@ def ConfirmReboot(sender):
 def RebootArray(sender):
     
     url = Get_unRAID_URL() + '/update.htm?startState=STOPPED&reboot=Reboot'
-    reboot = HTTP.Request(url).content
+    reboot = HTTP.Request(url, headers=AuthHeader()).content
     
     state = 'rebooting'
     while state == 'rebooting':
@@ -367,7 +378,7 @@ def ConfirmPowerDown(sender):
 def PowerDownArray(sender):
     
     url = Get_unRAID_URL() + '/update.htm?startState=STOPPED&shutdown=Power+down'
-    powerDown = HTTP.Request(url).content
+    powerDown = HTTP.Request(url, headers=AuthHeader()).content
     
     return MessageContainer(NAME, L('The server has been shut down. This plugin will not function until the server has been started again.'))
 
