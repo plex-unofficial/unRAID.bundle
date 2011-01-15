@@ -177,6 +177,9 @@ def DiskStatus(sender):
 
 def DiskMenu(sender, diskID, status):
     
+    if not Prefs['unMenu']:
+        return
+    
     dir = MediaContainer(noCache=True)
 
     url = Get_unRAID_URL() + ':8080/myMain'

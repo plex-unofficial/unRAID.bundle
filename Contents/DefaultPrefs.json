@@ -15,7 +15,14 @@
         "id":       "pass",
         "label":    "unRAID password",
         "type":     "text",
+        "option":   "hidden",
         "default":  ""
+    },
+    {
+        "id":       "unMenu",
+        "label":    "unMenu installed",
+        "type":     "bool",
+        "default":  "true"
     },
     {
         "id":       "WOL",
