@@ -166,17 +166,43 @@ def DiskStatus(sender):
     disks = GetDiskStatus()
     
     for disk in disks:
-        dir.Append(Function(DirectoryItem(DiskMenu, title=disk['name'], subtitle=disk['s/n'],
+        dir.Append(Function(PopupDirectoryItem(DiskMenu, title=disk['name'], subtitle=disk['s/n'],
             infolabel=disk['temp'], summary='Status: '+disk['status']+'\nSize: '+disk['size']
             +'\nFree Space: '+disk['free']+'\nReads: '+disk['reads']+'\nWrites: '+disk['writes']
-            +'\nErrors: '+disk['errors'], thumb=R(DISK_ICON))))
+            +'\nErrors: '+disk['errors'], thumb=R(DISK_ICON)), diskID=disk['name'], status=disk['status']))
     
     return dir
 
 ####################################################################################################
 
-def DiskMenu(sender):
-    return
+def DiskMenu(sender, diskID, status):
+    
+    dir = MediaContainer(noCache=True)
+
+    url = Get_unRAID_URL() + ':8080/myMain'
+    disks = {}
+    myMain = HTML.ElementFromURL(url, errors='ignore', cacheTime=0)
+    for disk in myMain.xpath('//fieldset//tr'): #/tbody')[0]:
+        try:
+            diskName = disk.xpath('./td')[1].text
+            Log(diskName)
+            deviceID = disk.xpath('./td')[2].text
+            Log(deviceID)
+            if diskName and deviceID:
+                disks[diskName] = deviceID
+        except:
+            continue
+        
+    Log(disks)
+    sequence = myMain.xpath('//fieldset/legend/a')[0].get('href').split('&seq=')[1].split('&')[0]
+    Log(sequence)
+    if status == 'Spun Up':
+        dir.Append(Function(DirectoryItem(SpinDownDisk, title='Spin Down'), diskName=diskID, deviceID=disks[diskID], sequence=sequence))
+    elif status == 'Spun Down':
+        dir.Append(Function(DirectoryItem(SpinUpDisk, title='Spin Up'), diskName=diskID, deviceID=disks[diskID], sequence=sequence))
+    else:
+        pass
+    return dir
 
 ####################################################################################################
 
@@ -244,6 +270,15 @@ def SpinUpArray(sender):
 
 ####################################################################################################
 
+def SpinUpDisk(sender, diskName, deviceID, sequence):
+    
+    url = Get_unRAID_URL() + ':8080/myMain?sort=&view=&seq=%s&dev=%s&disk=%s&cmd=spin&spinind=0' % (sequence, deviceID, diskName)
+    response = HTTP.Request(url, headers=AuthHeader()).content
+    
+    return MessageContainer(NAME, '%s spun up.' % diskName)
+    
+####################################################################################################
+
 def ConfirmSpinDown(sender):
     dir = MediaContainer()
     dir.Append(Function(DirectoryItem(SpinDownArray, 'Spin down all disks?')))
@@ -258,6 +293,15 @@ def SpinDownArray(sender):
     
     return MessageContainer(NAME, L('Disks in array are spun down.'))
 
+####################################################################################################
+
+def SpinDownDisk(sender, diskName, deviceID, sequence):
+    
+    url = Get_unRAID_URL() + ':8080/myMain?sort=&view=&seq=%s&dev=%s&disk=%s&cmd=spin&spinind=1' % (sequence, deviceID, diskName)
+    response = HTTP.Request(url, headers=AuthHeader()).content
+    
+    return MessageContainer(NAME, '%s spun down.' % diskName)
+    
 ####################################################################################################
 
 def CheckInProgress():
