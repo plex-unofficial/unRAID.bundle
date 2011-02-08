@@ -212,8 +212,8 @@ def DiskMenu(sender, diskID, status):
 def GetStartState():
     
     url = Get_unRAID_URL() + '/main.htm'
-    mainPage = HTML.ElementFromURL(url, errors='ignore', cacheTime=0, headers=AuthHeader())
     try:
+        mainPage = HTML.ElementFromURL(url, errors='ignore', cacheTime=0, headers=AuthHeader())
         state = mainPage.xpath('//input[@name="startState"]')[0].get('value')
     except:
         state= 'OFFLINE'
