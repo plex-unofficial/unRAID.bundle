@@ -83,14 +83,14 @@ def ApplicationsMainMenu():
             dir.Append(Function(PopupDirectoryItem(ConfirmPowerDown, 'Power Down', 'will activate a clean power down.',
                 summary = 'Once the server is powered down you will need to power it up manually. There is no "power up" command in this plugin.')))
     else:
-        dir.Append(Function(PrefsItem(title='Server Unavailable', subtitle='Cannot connect to unRAID server',
+        dir.Append(Function(DirectoryItem(NoAction, title='Server Unavailable', subtitle='Cannot connect to unRAID server',
             summary='The server is either offline or not available at the network address specified in the plugin '+
             'preferences. Please confirm that the prefs specify the correct IP address and that the server is online.')))
         if Prefs['WOL']:
-            dir.Append(Function(PopupDirectoryItem(WOLMenu, 'Wake Server', 'Send WOL magic packet to server',
+            dir.Append(Function(PopupDirectoryItem(WOLMenu, title='Wake Server', subtitle='Send WOL magic packet to server',
                 summary='Attempt to wake a sleeping server by sending a magic packet over the network. Requires the server\'s'+
-                'MAC Address set in the preferences.  Will only work if the server is sleeping and supports Wake-On-LAN.'),
-                Prefs['MACaddress']))
+                ' MAC Address set in the preferences.  Will only work if the server is sleeping and supports Wake-On-LAN.'),
+                MACaddress=Prefs['MACaddress']))
 
     dir.Append(PrefsItem(title='Preferences', subtitle='unRAID plugin', thumb=R(PREFS_ICON)))
     
@@ -433,5 +433,16 @@ def PowerDownArray(sender):
 
 def WOLMenu(sender, MACaddress):
     dir = MediaContainer()
-    dir.Append(Function(DirectoryItem(WakeOnLan, 'Send WOL packet to %s' % MACaddress), MACaddress))
+    dir.Append(Function(DirectoryItem(SendWOL, 'Send WOL magic packet?'), MACaddress=MACaddress))
     return dir
+
+####################################################################################################
+
+def SendWOL(sender, MACaddress):
+    result = WakeOnLan(MACaddress)
+    return MessageContainer(NAME, L('Magic packet sent.'))
+    
+####################################################################################################
+
+def NoAction(sender):
+    return
