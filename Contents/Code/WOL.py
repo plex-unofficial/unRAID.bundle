@@ -28,7 +28,7 @@ def WakeOnLan(ethernet_address):
 
   s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
   s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-  s.sendto(msg, ('', 9))
+  s.sendto(msg, ('<broadcast>', 9))
   s.close()
 
 # Example use
