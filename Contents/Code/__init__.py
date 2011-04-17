@@ -82,6 +82,7 @@ def ApplicationsMainMenu():
                 summary = 'Depending on your system, it may be a few minutes before the server (and the plugin) are back online')))
             dir.Append(Function(PopupDirectoryItem(ConfirmPowerDown, 'Power Down', 'will activate a clean power down.',
                 summary = 'Once the server is powered down you will need to power it up manually. There is no "power up" command in this plugin.')))
+        dir.Append(Function(DirectoryItem(UserScriptMenu, 'User Scripts', 'Execute unMenu user scripts')))
     else:
         dir.Append(Function(DirectoryItem(NoAction, title='Server Unavailable', subtitle='Cannot connect to unRAID server',
             summary='The server is either offline or not available at the network address specified in the plugin '+
@@ -441,6 +442,32 @@ def WOLMenu(sender, MACaddress):
 def SendWOL(sender, MACaddress):
     result = WakeOnLan(MACaddress)
     return MessageContainer(NAME, L('Magic packet sent.'))
+    
+####################################################################################################
+
+def UserScriptMenu(sender):
+    
+    url = Get_unRAID_URL() + ':8080/user_scripts'
+    
+    scriptPage = HTML.ElementFromURL(url, errors='ignore', cacheTime=0, headers=AuthHeader())
+    
+    dir = MediaContainer(title2='User Scripts', noCache=True)
+    
+    for script in scriptPage.xpath('//input[@name="command"]'):
+        title = script.get('value')
+        dir.Append(Function(DirectoryItem(DoScript, title)))
+    
+    return dir
+
+####################################################################################################
+
+def DoScript(sender):
+    url = Get_unRAID_URL() + ':8080/user_scripts?command=%s' % String.Quote(sender.itemTitle, usePlus=True)
+    result = HTTP.Request(url).content
+    resultParts = result.split('<hr>')
+    scriptOutput = resultParts[-1].split('</BODY>')[0].strip('\n')
+    
+    return MessageContainer('User Script: "%s" executed' % sender.itemTitle, 'Output: %s' % scriptOutput)
     
 ####################################################################################################
 
